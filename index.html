@@ -1,185 +1,176 @@
 <!doctype html>
 <html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Crear plugins para SynapseBox · Documentación</title><link rel="stylesheet" href="style.css"></head><body>
-<div class="wrap">
-<nav><b>🧩 Plugins</b>
-<a href="#intro">Introducción</a><a href="#estructura">Estructura</a><a href="#manifest">plugin.json</a><a href="#servidor">API del servidor</a><a href="#cliente">SDK del cliente</a>
-<a href="#recetas">Recetas</a><a href="#ciclo">Ciclo de vida</a><a href="#publicar">Publicar</a><a href="#repo">Estructura del repositorio</a><a href="#seguridad">Seguridad</a><a href="#consejos">Buenas prácticas</a></nav>
+<title>Plugins de SynapseBox · Guía fácil</title><link rel="stylesheet" href="style.css"></head><body>
+
+<div id="gate" role="dialog" aria-modal="true" aria-labelledby="gt"><div class="m">
+<h2 id="gt">⚠️ Antes de seguir: crea tu archivo <code>.env</code></h2>
+<p>Para <b>subir plugins</b> a la comunidad, SynapseBox necesita un <b>token de acceso</b> guardado en un archivo llamado <code>.env</code>. Si no lo haces, <b>la subida fallará</b>.</p>
+<ol><li>Pide el token en un <b>ticket</b> del <a href="https://discord.gg/jRvMMkZNBP" target="_blank" rel="noopener">Discord oficial</a>.</li>
+<li>Crea el archivo <code>.env</code> en la carpeta de SynapseBox y añade <code>PLUGINS_GITHUB_TOKEN=tu_token</code>.</li>
+<li>Reinicia SynapseBox.</li></ol>
+<p>Te lo explicamos paso a paso justo después de cerrar este aviso.</p>
+<label><input type="checkbox" id="ck"><span>He entendido que necesito crear el <code>.env</code> con el token y que debo pedirlo por ticket.</span></label>
+<button id="go" disabled>Entendido, ver cómo se hace</button></div></div>
+
+<div class="must">🔑 Importante: para subir plugins necesitas crear el <code>.env</code> con tu token. <a href="#paso0" data-gate>Ver cómo →</a></div>
+<header class="top"><b>🧩 Plugins de SynapseBox</b><a href="#que">¿Qué es?</a><a href="#paso0" class="keep">Paso 0 · .env</a><a href="#primero">Tu primer plugin</a><a href="#piezas">Las piezas</a><a href="#ref">Referencia</a><a href="#subir">Subir</a><a href="#faq">Problemas</a></header>
+
+<div class="hero"><h1>Crea plugins para SynapseBox</h1><p>Cambia iconos, colores, imágenes y funciones sin tocar el código original. Esta guía está hecha para que la entienda cualquiera, aunque estés empezando.</p><a class="btn" href="#primero">Empezar en 5 minutos</a></div>
+
 <main>
-<h1>Crear plugins para SynapseBox</h1>
-<p class="lead">Guía para escribir plugins en Node.js que cambian iconos, imágenes, funciones y comportamiento. Requiere SynapseBox 2.15.0 o superior.</p>
+<section id="que"><h2>¿Qué es un plugin?</h2><p class="sub">Piensa en SynapseBox como un móvil y en un plugin como una <b>app</b> que le instalas: añade cosas nuevas o cambia las que ya hay, y puedes quitarla cuando quieras.</p>
+<div class="grid">
+<div class="card"><div class="ic">🎨</div><h4>Cambiar el aspecto</h4><p>Colores, tamaños, iconos, imágenes, fuentes.</p></div>
+<div class="card"><div class="ic">⚙️</div><h4>Añadir funciones</h4><p>Nuevas direcciones (rutas), avisos, atajos, herramientas para administradores.</p></div>
+<div class="card"><div class="ic">🔁</div><h4>Cambiar el comportamiento</h4><p>Interceptar peticiones, bloquear IPs, modo mantenimiento…</p></div>
+<div class="card"><div class="ic">🔌</div><h4>Activar y desactivar</h4><p>El administrador los enciende y apaga al instante, sin reiniciar.</p></div></div>
+<div class="flow"><span>📝 Escribes tu plugin</span><i>→</i><span>⬆️ Lo subes desde el panel</span><i>→</i><span>📚 Aparece en el repositorio</span><i>→</i><span>⬇️ Otros lo descargan</span><i>→</i><span>✅ Lo activan</span></div>
+<div class="box warn"><b>Ojo con la seguridad</b>Un plugin puede hacer <b>casi cualquier cosa</b> en tu servidor. Activa solo plugins en los que confíes y lee su código antes.</div></section>
 
-<h2 id="intro">Introducción</h2>
-<p>Un plugin es una carpeta con código. El administrador puede <b>activarlo y desactivarlo al instante</b> desde <code>Admin → Plugins</code>, sin reiniciar el servidor. Un plugin puede tener tres partes, todas opcionales:</p>
-<table><tr><th>Archivo</th><th>Dónde se ejecuta</th><th>Para qué</th></tr>
-<tr><td><code>server.js</code></td><td>Node.js (servidor)</td><td>Rutas, middleware, reemplazar archivos, base de datos, tareas, eventos.</td></tr>
-<tr><td><code>client.js</code></td><td>Navegador</td><td>Cambiar la interfaz, añadir botones, atajos, avisos…</td></tr>
-<tr><td><code>style.css</code></td><td>Navegador</td><td>Colores, tamaños, ocultar o mover elementos.</td></tr></table>
-<div class="warn"><b>Importante:</b> el código de <code>server.js</code> se ejecuta con los mismos permisos que SynapseBox (puede leer archivos, la base de datos y abrir conexiones). Por eso solo los administradores gestionan plugins.</div>
+<section id="paso0"><h2><span class="n">0</span>Obligatorio: crea el archivo <code>.env</code></h2>
+<p class="sub">Es el único paso que no puedes saltarte si quieres <b>subir</b> plugins. Para descargar e instalar no hace falta.</p>
+<div class="box bad"><b>🚫 Sin este paso, subir un plugin dará error.</b>SynapseBox necesita un permiso (token) para poder enviar tu plugin al repositorio oficial.</div>
+<ol class="steps">
+<li><b>Pide tu token</b><br>Entra al <a href="https://discord.gg/jRvMMkZNBP" target="_blank" rel="noopener">servidor oficial de Discord</a>, abre un <b>ticket</b> en la sección de soporte y pide el token de plugins. Te lo daremos por privado.</li>
+<li><b>Abre la carpeta de SynapseBox</b><br>Es la misma donde está <code>package.json</code> y <code>server.js</code>. Si ya tienes un archivo <code>.env</code>, ábrelo. Si no, crea uno nuevo (no <code>.env.txt</code>; el nombre empieza por punto).</li>
+<li><b>Escribe esta línea</b> (cambia lo de la derecha por tu token):
+<pre><code>PLUGINS_GITHUB_TOKEN=PEGA_AQUI_TU_TOKEN</code></pre>Sin espacios, sin comillas y sin dejar nada detrás del token.</li>
+<li><b>Guarda el archivo y reinicia SynapseBox</b><br>Los cambios del <code>.env</code> solo se leen al arrancar.</li>
+<li><b>Comprueba que funciona</b><br>Entra en <b>Admin → Plugins → Subir plugin</b>. Si al subir no te da error de permisos, está bien configurado.</li></ol>
+<div class="grid">
+<div class="card"><div class="ic">🔒</div><h4>Nunca lo compartas</h4><p>El token es como una contraseña. No lo publiques, no lo pongas en capturas ni lo subas a ningún repositorio.</p></div>
+<div class="card"><div class="ic">🙈</div><h4>No subas el .env</h4><p>El archivo <code>.env</code> ya está en el <code>.gitignore</code> de SynapseBox: déjalo así.</p></div>
+<div class="card"><div class="ic">🎯</div><h4>Acceso limitado</h4><p>El token solo sirve para el repositorio de plugins, nada más.</p></div>
+<div class="card"><div class="ic">🆘</div><h4>¿Se filtró?</h4><p>Avisa en un ticket del Discord para que lo revoquen y te den otro.</p></div></div>
+<div class="box"><b>Otras variables opcionales</b>Cambia <code>PLUGINS_REPO=usuario/repositorio</code> si usas otro repositorio. Los plugins que solo <b>descargas</b> no necesitan ninguna.</div></section>
 
-<h2 id="estructura">Estructura de un plugin</h2>
-<pre><code>mi-plugin/
-├── plugin.json     ← obligatorio
-├── server.js       ← opcional
-├── client.js       ← opcional
-├── style.css       ← opcional
-└── images/         ← portada y capturas (1 a 5 imágenes)</code></pre>
-<p>Para probarlo en local, copia la carpeta a <code>data/plugins/mi-plugin/</code> (el nombre de la carpeta debe ser el <code>id</code>), entra en <code>Admin → Plugins → Instalados</code> y actívalo.</p>
-
-<h2 id="manifest">plugin.json</h2>
+<section id="primero"><h2><span class="n">1</span>Tu primer plugin en 5 minutos</h2><p class="sub">Vamos a crear un plugin que muestra un saludo en la pantalla. No necesitas saber mucho: copia y pega.</p>
+<ol class="steps">
+<li><b>Crea una carpeta</b> dentro de <code>data/plugins/</code> llamada <code>mi-saludo</code>.<div class="tree">SynapseBox/<br>└── data/<br>&nbsp;&nbsp;&nbsp;└── plugins/<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;└── <b>mi-saludo/</b> <em>← la creas tú</em></div></li>
+<li><b>Dentro, crea <code>plugin.json</code></b> (la “tarjeta de identidad” del plugin):
 <pre><code>{
-  "id": "mi-plugin",
-  "title": "Mi plugin",
+  "id": "mi-saludo",
+  "title": "Mi saludo",
   "version": "1.0.0",
   "category": "Utilidades",
-  "author": "tu-usuario",
-  "description": "Qué hace, en una o dos frases.",
-  "images": ["images/imagen-1.png"],
-  "server": "server.js",
-  "client": "client.js",
-  "style": "style.css",
-  "files": ["server.js", "client.js", "style.css"]
-}</code></pre>
-<table><tr><th>Campo</th><th>Notas</th></tr>
-<tr><td><code>id</code></td><td>Obligatorio. Minúsculas, números y guiones (2-40 caracteres). Debe coincidir con la carpeta.</td></tr>
-<tr><td><code>title</code>, <code>description</code>, <code>version</code>, <code>author</code></td><td>Se muestran en el panel. La versión sigue el formato <code>1.0.0</code>.</td></tr>
-<tr><td><code>category</code></td><td>Agrupa el plugin en el repositorio (Apariencia, Utilidades, Seguridad…).</td></tr>
-<tr><td><code>images</code></td><td>De 1 a 5; la primera es la portada. PNG, JPG, GIF, WebP o SVG.</td></tr>
-<tr><td><code>server</code>, <code>client</code>, <code>style</code></td><td>Nombres de los archivos que se cargan. Omite los que no uses.</td></tr></table>
-<div class="note">Si subes el plugin desde el panel, SynapseBox genera el <code>plugin.json</code> por ti con los datos del formulario. Detecta <code>server.js</code>, <code>client.js</code> y <code>style.css</code> por su nombre.</div>
+  "description": "Muestra un saludo al abrir el panel.",
+  "client": "client.js"
+}</code></pre></li>
+<li><b>Crea <code>client.js</code></b> (lo que verá el usuario en el navegador):
+<pre><code>SynapseBox.ready(() =&gt; {
+  SynapseBox.toast("¡Hola desde mi primer plugin! 👋");
+});</code></pre></li>
+<li><b>Actívalo</b><br>Ve a <b>Admin → Plugins → Instalados</b>, busca “Mi saludo” y enciende el interruptor.</li>
+<li><b>¡Míralo!</b><br>Recarga el panel: aparece el aviso. Apaga el interruptor y desaparece. Así de simple.</li></ol>
+<div class="box ok"><b>🎉 Ya sabes lo básico</b>Un plugin es una carpeta con un <code>plugin.json</code> y uno o más archivos de código. Ahora veamos qué piezas puedes usar.</div></section>
 
-<h2 id="servidor">API del servidor (server.js)</h2>
-<p><code>server.js</code> exporta una función, o un objeto con <code>activate</code> y <code>deactivate</code>. Ambos reciben <code>api</code>.</p>
-<pre><code>// Forma corta
-module.exports = api =&gt; { api.log("hola"); };
+<section id="piezas"><h2><span class="n">2</span>Las 3 piezas de un plugin</h2><p class="sub">Todas son opcionales: usa solo las que necesites.</p>
+<div class="grid">
+<div class="card"><div class="ic">🖥️</div><h4>server.js</h4><p><b>El cerebro.</b> Corre en el servidor (Node.js). Para crear direcciones nuevas, guardar datos, reemplazar iconos o cambiar cómo responde SynapseBox.</p></div>
+<div class="card"><div class="ic">🌐</div><h4>client.js</h4><p><b>Lo que se ve y se toca.</b> Corre en el navegador. Para botones, avisos, atajos de teclado, cambiar textos.</p></div>
+<div class="card"><div class="ic">🎨</div><h4>style.css</h4><p><b>La pintura.</b> Solo estilos: colores, tamaños, ocultar o mover cosas.</p></div></div>
+<div class="tree">mi-plugin/<br>├── plugin.json <em>← obligatorio: nombre, versión, descripción</em><br>├── server.js <em>← opcional: parte del servidor</em><br>├── client.js <em>← opcional: parte del navegador</em><br>├── style.css <em>← opcional: estilos</em><br>└── images/ <em>← portada y capturas (1 a 5)</em></div>
 
-// Forma completa
-module.exports = {
-  async activate(api) { /* se ejecuta al activar */ },
-  async deactivate(api) { /* se ejecuta al desactivar: limpia temporizadores, etc. */ }
-};</code></pre>
-<table><tr><th>Propiedad</th><th>Descripción</th></tr>
-<tr><td><code>api.use(fn)</code></td><td>Middleware de Express para <b>todas</b> las peticiones. Va antes que las rutas de SynapseBox: puedes leerlas, cambiarlas o cortarlas.</td></tr>
-<tr><td><code>api.get / post / put / delete(ruta, fn)</code></td><td>Rutas propias. Si usas una ruta que ya existe, la tuya <b>la reemplaza</b>.</td></tr>
-<tr><td><code>api.serveFile(url, archivo)</code></td><td>Responde una URL con un archivo de tu plugin. Sirve para cambiar iconos e imágenes (<code>/favicon.svg</code>, <code>/icons.svg</code>…).</td></tr>
-<tr><td><code>api.serveDir(url, carpeta)</code></td><td>Publica una carpeta de tu plugin bajo una URL.</td></tr>
-<tr><td><code>api.router</code>, <code>api.app</code>, <code>api.express</code></td><td>Acceso directo al router del plugin, a la app de Express y al módulo express.</td></tr>
-<tr><td><code>api.on(evento, fn)</code> / <code>api.emit(evento, datos)</code></td><td>Eventos. Los de SynapseBox: <code>server:start</code> y <code>plugin:enabled</code>. Puedes crear los tuyos.</td></tr>
-<tr><td><code>api.transformHtml(fn)</code></td><td><code>fn(html, {url, user})</code> devuelve el HTML modificado de cualquier página antes de enviarla.</td></tr>
-<tr><td><code>api.inject.head / api.inject.body</code></td><td>Listas de fragmentos HTML que se añaden a todas las páginas.</td></tr>
-<tr><td><code>api.data.read(nombre, defecto)</code> / <code>api.data.write(nombre, valor)</code></td><td>Almacenamiento JSON propio en <code>data/plugin-data/&lt;id&gt;/</code>.</td></tr>
-<tr><td><code>api.db</code></td><td>Base de datos de SynapseBox: <code>get</code>, <code>all</code>, <code>run</code> (SQLite).</td></tr>
-<tr><td><code>api.core("services/auth")</code></td><td>Carga cualquier módulo interno de <code>src/</code>.</td></tr>
-<tr><td><code>api.settings</code>, <code>api.config</code>, <code>api.utils</code></td><td>Ajustes globales, rutas y utilidades del servidor.</td></tr>
-<tr><td><code>api.manifest</code>, <code>api.dir</code>, <code>api.dataDir</code>, <code>api.log()</code></td><td>Tu <code>plugin.json</code>, tu carpeta, tu carpeta de datos y un <code>console.log</code> con prefijo.</td></tr></table>
-<p>En las rutas, <code>req.user</code> es el usuario con sesión (o <code>null</code>) y <code>req.user.is_admin</code> indica si es administrador.</p>
+<h3>El plugin.json, campo por campo</h3>
+<table><tr><th>Campo</th><th>¿Qué pongo?</th><th>Ejemplo</th></tr>
+<tr><td><code>id</code></td><td>Nombre corto sin espacios ni mayúsculas. <b>Igual que la carpeta.</b></td><td><code>mi-saludo</code></td></tr>
+<tr><td><code>title</code></td><td>El nombre que verá la gente.</td><td><code>Mi saludo</code></td></tr>
+<tr><td><code>version</code></td><td>Tres números. Súbela cada vez que mejores el plugin.</td><td><code>1.0.0</code> → <code>1.1.0</code></td></tr>
+<tr><td><code>category</code></td><td>Grupo donde aparecerá.</td><td><code>Apariencia</code>, <code>Utilidades</code>…</td></tr>
+<tr><td><code>description</code></td><td>Qué hace, en una o dos frases.</td><td><code>Muestra un saludo…</code></td></tr>
+<tr><td><code>server</code> · <code>client</code> · <code>style</code></td><td>Nombre de cada archivo que uses. Quita los que no uses.</td><td><code>"client": "client.js"</code></td></tr></table>
 
-<h2 id="cliente">SDK del cliente (client.js y style.css)</h2>
-<p>Tu <code>style.css</code> y <code>client.js</code> se añaden a todas las páginas HTML mientras el plugin esté activo. Antes de tu script se carga <code>window.SynapseBox</code>:</p>
-<table><tr><th>Función</th><th>Descripción</th></tr>
-<tr><td><code>SynapseBox.page</code></td><td>Nombre de la página: <code>panel</code>, <code>index</code>, <code>themes</code>, <code>admin/index</code>…</td></tr>
-<tr><td><code>SynapseBox.ready(fn)</code></td><td>Ejecuta <code>fn</code> cuando el DOM está listo.</td></tr>
-<tr><td><code>SynapseBox.api(url, cuerpo?, método?)</code></td><td><code>fetch</code> con JSON; lanza <code>Error</code> si falla. Con <code>FormData</code> envía archivos.</td></tr>
-<tr><td><code>SynapseBox.css(texto)</code></td><td>Inserta CSS en la página.</td></tr>
-<tr><td><code>SynapseBox.html(selector, html)</code></td><td>Cambia el contenido de un elemento.</td></tr>
-<tr><td><code>SynapseBox.toast(mensaje, esError?)</code></td><td>Aviso emergente.</td></tr>
-<tr><td><code>SynapseBox.session()</code></td><td>Datos de la sesión actual.</td></tr>
-<tr><td><code>SynapseBox.on / emit</code></td><td>Eventos del navegador; <code>ready</code> se emite con el nombre de la página.</td></tr></table>
-<div class="note">Dentro del navegador tienes el DOM completo: puedes cambiar iconos (<code>&lt;svg&gt;&lt;use href="/icons.svg#…"&gt;</code>), imágenes, textos, ocultar botones o añadir otros nuevos. Por la política de seguridad (CSP) los scripts deben ser archivos de tu plugin, no código <code>inline</code>.</div>
-
-<h2 id="recetas">Recetas</h2>
-<h3>Cambiar un icono o una imagen</h3>
-<pre><code>// server.js
-module.exports = api =&gt; {
+<h3>Ejemplos rápidos</h3>
+<details open><summary>🎨 Cambiar un color (solo style.css)</summary><pre><code>:root { --accent: #ff4d94 !important; }</code></pre>Pon <code>"style": "style.css"</code> en el plugin.json.</details>
+<details><summary>🖼️ Cambiar un icono o imagen (server.js)</summary><pre><code>module.exports = api =&gt; {
   api.serveFile("/favicon.svg", "mi-icono.svg");
-  api.serveFile("/apple-touch-icon.png", "icono.png");
-};</code></pre>
-<h3>Añadir una ruta</h3>
-<pre><code>module.exports = api =&gt; {
+};</code></pre>Pon el archivo <code>mi-icono.svg</code> junto al <code>server.js</code>. Cuando alguien pida <code>/favicon.svg</code>, recibirá el tuyo.</details>
+<details><summary>🛣️ Crear una dirección nueva (server.js)</summary><pre><code>module.exports = api =&gt; {
   api.get("/api/plugins/mi-plugin/hora", (req, res) =&gt; {
-    if (!req.user) return res.status(401).json({ error: "No autorizado" });
     res.json({ hora: new Date().toISOString() });
   });
-};</code></pre>
-<h3>Cambiar el comportamiento de una ruta existente</h3>
-<pre><code>module.exports = api =&gt; {
-  api.use((req, res, next) =&gt; {
-    if (req.method === "POST" &amp;&amp; req.path === "/api/login") api.log("intento de login");
-    next(); // sin next() la petición se corta aquí
-  });
-};</code></pre>
-<h3>Modificar el HTML de una página</h3>
-<pre><code>module.exports = api =&gt; {
-  api.transformHtml((html, { url }) =&gt; html.replace("&lt;title&gt;", "&lt;title&gt;🧩 "));
-};</code></pre>
-<h3>Guardar datos</h3>
-<pre><code>module.exports = api =&gt; {
+};</code></pre>Visita <code>/api/plugins/mi-plugin/hora</code> y verás la hora.</details>
+<details><summary>💾 Guardar datos (server.js)</summary><pre><code>module.exports = api =&gt; {
   api.post("/api/plugins/contador/sumar", (req, res) =&gt; {
-    const n = (api.data.read("contador", { n: 0 }).n) + 1;
+    const n = api.data.read("contador", { n: 0 }).n + 1;
     api.data.write("contador", { n });
     res.json({ n });
   });
-};</code></pre>
-<h3>Usar la base de datos y módulos internos</h3>
-<pre><code>module.exports = api =&gt; {
-  api.get("/api/plugins/mi-plugin/usuarios", (req, res) =&gt; {
-    if (!req.user?.is_admin) return res.status(403).json({ error: "Solo administradores" });
-    res.json(api.db.all("SELECT username FROM users ORDER BY username"));
-  });
-};</code></pre>
-<h3>Tarea periódica (limpiar al desactivar)</h3>
-<pre><code>let timer;
-module.exports = {
-  activate(api) { timer = setInterval(() =&gt; api.log("tick"), 60000); },
-  deactivate() { clearInterval(timer); }
-};</code></pre>
-<h3>Cliente: botón nuevo y estilo</h3>
-<pre><code>// client.js
-SynapseBox.ready(() =&gt; {
-  if (SynapseBox.page !== "panel") return;
+};</code></pre></details>
+<details><summary>🔐 Solo para administradores</summary><pre><code>api.get("/api/plugins/mi-plugin/secreto", (req, res) =&gt; {
+  if (!req.user?.is_admin) return res.status(403).json({ error: "Solo administradores" });
+  res.json({ ok: true });
+});</code></pre></details>
+<details><summary>🛑 Cambiar cómo responde SynapseBox (middleware)</summary><pre><code>api.use((req, res, next) =&gt; {
+  if (req.path === "/prohibido") return res.status(403).send("No");
+  next(); // ¡no olvides next()! sin él, la petición se queda parada
+});</code></pre></details>
+<details><summary>🧱 Añadir un botón nuevo (client.js)</summary><pre><code>SynapseBox.ready(() =&gt; {
   const b = document.createElement("button");
   b.className = "btn"; b.textContent = "Saludar";
   b.onclick = () =&gt; SynapseBox.toast("¡Hola!");
   document.body.append(b);
-});</code></pre>
+});</code></pre></details>
+<details><summary>⏱️ Tarea que se repite (acordarse de limpiar)</summary><pre><code>let t;
+module.exports = {
+  activate(api) { t = setInterval(() =&gt; api.log("tic"), 60000); },
+  deactivate()  { clearInterval(t); }   // se ejecuta al apagar el plugin
+};</code></pre></details></section>
 
-<h2 id="ciclo">Ciclo de vida</h2>
-<ul><li><b>Activar:</b> se carga <code>server.js</code> (sin caché), se llama a <code>activate(api)</code> y desde ese momento sus rutas, <code>client.js</code> y <code>style.css</code> funcionan.</li>
-<li><b>Desactivar:</b> se llama a <code>deactivate(api)</code>, se quitan sus rutas y eventos y deja de inyectarse en las páginas.</li>
-<li><b>Al arrancar el servidor:</b> se cargan los plugins que estaban activos.</li>
-<li><b>Actualizar:</b> descargar de nuevo desde el repositorio reemplaza los archivos; si estaba activo se recarga solo.</li>
-<li>Si un plugin lanza un error al cargar, se muestra en la consola del servidor y el resto sigue funcionando.</li></ul>
+<section id="ref"><h2><span class="n">3</span>Referencia rápida</h2><p class="sub">Para cuando ya quieras hacer cosas más grandes. No hace falta memorizarla.</p>
+<h3>En server.js recibes <code>api</code></h3>
+<table><tr><th>Herramienta</th><th>Sirve para</th></tr>
+<tr><td><code>api.get / post / put / delete(ruta, fn)</code></td><td>Crear direcciones. Si ya existe, <b>la tuya la sustituye</b>.</td></tr>
+<tr><td><code>api.use(fn)</code></td><td>Revisar o cambiar <b>todas</b> las peticiones.</td></tr>
+<tr><td><code>api.serveFile(url, archivo)</code></td><td>Responder una dirección con un archivo tuyo (iconos, imágenes).</td></tr>
+<tr><td><code>api.serveDir(url, carpeta)</code></td><td>Publicar una carpeta entera.</td></tr>
+<tr><td><code>api.transformHtml(fn)</code></td><td>Modificar el HTML de cualquier página antes de enviarla.</td></tr>
+<tr><td><code>api.inject.head / body</code></td><td>Añadir trozos de HTML a todas las páginas.</td></tr>
+<tr><td><code>api.data.read / write</code></td><td>Guardar y leer tus propios datos.</td></tr>
+<tr><td><code>api.db</code></td><td>Base de datos de SynapseBox (<code>get</code>, <code>all</code>, <code>run</code>).</td></tr>
+<tr><td><code>api.core("ruta")</code></td><td>Usar cualquier módulo interno de SynapseBox.</td></tr>
+<tr><td><code>api.on / emit</code></td><td>Eventos: <code>server:start</code> y <code>plugin:enabled</code> (y los tuyos).</td></tr>
+<tr><td><code>api.log(...)</code></td><td>Escribir en la consola con el nombre de tu plugin.</td></tr></table>
+<p>Dentro de una ruta: <code>req.user</code> es la persona con sesión (o vacío) y <code>req.user.is_admin</code> dice si es administrador.</p>
+<h3>En client.js tienes <code>SynapseBox</code></h3>
+<table><tr><th>Herramienta</th><th>Sirve para</th></tr>
+<tr><td><code>SynapseBox.ready(fn)</code></td><td>Ejecutar cuando la página está lista.</td></tr>
+<tr><td><code>SynapseBox.page</code></td><td>En qué página estás (<code>panel</code>, <code>admin/index</code>…).</td></tr>
+<tr><td><code>SynapseBox.toast(texto)</code></td><td>Aviso emergente.</td></tr>
+<tr><td><code>SynapseBox.api(url, datos?)</code></td><td>Hablar con el servidor (devuelve JSON).</td></tr>
+<tr><td><code>SynapseBox.css(texto)</code></td><td>Añadir estilos desde código.</td></tr>
+<tr><td><code>SynapseBox.session()</code></td><td>Saber quién ha iniciado sesión.</td></tr></table>
+<h3>Ciclo de vida</h3>
+<div class="flow"><span>🟢 Activar<br><small>se ejecuta <code>activate</code></small></span><i>→</i><span>⚙️ Funciona<br><small>rutas + client + style</small></span><i>→</i><span>🔴 Desactivar<br><small>se ejecuta <code>deactivate</code></small></span></div></section>
 
-<h2 id="publicar">Publicar tu plugin</h2>
-<p>En <code>Admin → Plugins → Subir plugin</code> rellena <b>todos</b> los campos obligatorios:</p>
-<ul><li><b>Título</b> y <b>descripción</b> (mínimo 10 caracteres).</li><li><b>Categoría</b>: se crea una carpeta con ese nombre.</li><li><b>Imágenes</b>: de 1 a 5 (obligatoria al menos una; la primera es la portada).</li><li><b>Archivo(s)</b> del plugin: al menos uno.</li><li>Versión (opcional, por defecto <code>1.0.0</code>).</li></ul>
-<p>Node ejecuta <code>git</code>, crea una rama <code>plugin/&lt;id&gt;-&lt;versión&gt;-…</code> y abre un <b>pull request directamente en</b> <a href="https://github.com/OctavioproYT452/SynapseBox-Puglins/">SynapseBox-Puglins</a>, sin forks. Un mantenedor lo revisa y lo fusiona.</p>
-<div class="warn"><b>Hace falta una cuenta con permiso de escritura en el repositorio.</b> GitHub no permite crear ramas ni pull requests sin autenticarse. Dos opciones: <b>(1)</b> «Vincular GitHub» en el panel (código de dispositivo, sin claves en archivos; necesita <code>PLUGINS_GITHUB_CLIENT_ID</code> y que la cuenta sea colaboradora), o <b>(2)</b> <code>PLUGINS_GITHUB_TOKEN</code> en <code>.env</code> con un token <i>fine-grained</i> solo para este repositorio (<i>Contents</i> y <i>Pull requests</i>: Read and write); con token se hace push directo. <code>PLUGINS_REPO=usuario/repositorio</code> cambia el repositorio.</div>
-<p>Para actualizar un plugin, súbelo con el mismo título y una versión mayor: se reemplaza su carpeta.</p>
+<section id="subir"><h2><span class="n">4</span>Subir tu plugin a la comunidad</h2>
+<div class="box warn"><b>¿Hiciste el Paso 0?</b>Necesitas el <code>.env</code> con <code>PLUGINS_GITHUB_TOKEN</code>. <a href="#paso0" data-gate>Volver a verlo</a></div>
+<ol class="steps">
+<li>Ve a <b>Admin → Plugins → Subir plugin</b>.</li>
+<li>Rellena <b>todo lo obligatorio</b>: <span class="pill">Título</span> <span class="pill">Descripción</span> <span class="pill">Categoría</span> <span class="pill">1 a 5 imágenes</span> <span class="pill">Archivo(s)</span>. La versión es opcional (por defecto 1.0.0).</li>
+<li>Pulsa <b>Subir al repositorio</b>. SynapseBox hace el trabajo de Git por ti.</li>
+<li>Tu plugin queda en <a href="https://github.com/OctavioproYT452/SynapseBox-Puglins/" target="_blank" rel="noopener">el repositorio de plugins</a> y aparece en la pestaña <b>Repositorio</b> para todos.</li></ol>
+<h3>Cómo queda ordenado</h3>
+<div class="tree">SynapseBox-Puglins/<br>└── 📁 Utilidades <em>← categoría</em><br>&nbsp;&nbsp;&nbsp;└── 📁 mi-saludo <em>← tu plugin</em><br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;├── plugin.json <em>← versión, título, descripción…</em><br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;├── 📁 images <em>← tus imágenes</em><br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;└── client.js <em>← tus archivos</em></div>
+<p><b>Para actualizar</b> un plugin, súbelo con el mismo título y una versión mayor. <b>Para descargar</b> uno, ve a la pestaña <b>Repositorio</b> y pulsa Descargar; luego actívalo en <b>Instalados</b>.</p>
+<table><tr><th>Límite</th><th>Valor</th></tr><tr><td>Imágenes</td><td>de 1 a 5 (PNG, JPG, GIF, WebP o SVG)</td></tr><tr><td>Tamaño por archivo</td><td>5 MB</td></tr><tr><td>Archivos por plugin</td><td>hasta 20</td></tr></table></section>
 
-<h2 id="repo">Estructura del repositorio</h2>
-<pre><code>SynapseBox-Puglins/
-└── Utilidades/                 ← categoría
-    └── reloj-en-panel/         ← id del plugin
-        ├── plugin.json         ← versión, título, descripción, imágenes…
-        ├── images/
-        │   └── imagen-1.svg
-        └── client.js           ← archivos del plugin</code></pre>
-<p>El panel lee este árbol de GitHub, muestra las categorías con sus imágenes y descarga la carpeta del plugin a <code>data/plugins/&lt;id&gt;/</code>.</p>
+<section id="seg"><h2><span class="n">5</span>Buenas prácticas y seguridad</h2>
+<div class="grid">
+<div class="card"><div class="ic">✅</div><h4>Comprueba quién es</h4><p>Usa <code>req.user</code> y <code>is_admin</code> antes de dar datos o permitir cambios.</p></div>
+<div class="card"><div class="ic">🧼</div><h4>No te fíes de lo que llega</h4><p>Valida todo lo que venga en <code>req.body</code> y <code>req.query</code>.</p></div>
+<div class="card"><div class="ic">🏷️</div><h4>Rutas con tu nombre</h4><p>Empieza por <code>/api/plugins/tu-id/…</code> para no pisar nada sin querer.</p></div>
+<div class="card"><div class="ic">🧹</div><h4>Limpia al apagar</h4><p>Detén temporizadores en <code>deactivate</code>.</p></div>
+<div class="card"><div class="ic">🎨</div><h4>Usa las variables del tema</h4><p><code>var(--card)</code>, <code>var(--accent)</code>, <code>var(--text)</code>… así respetas los temas.</p></div>
+<div class="card"><div class="ic">🤫</div><h4>Cero secretos en el plugin</h4><p>Nada de contraseñas ni tokens dentro de tus archivos: el repositorio es público.</p></div></div></section>
 
-<h2 id="seguridad">Seguridad</h2>
-<ul><li>Lee el código de un plugin antes de activarlo: tiene acceso total al servidor.</li>
-<li>Comprueba siempre <code>req.user</code> y <code>req.user.is_admin</code> en tus rutas.</li>
-<li>Nunca confíes en <code>req.body</code> ni <code>req.query</code>: valida y limita lo que recibes.</li>
-<li>No guardes secretos en el repositorio; usa <code>api.data</code> o variables de entorno.</li>
-<li>SynapseBox nunca sirve tu <code>server.js</code> al navegador. Solo se sirven los archivos de tu plugin con extensiones permitidas: js, css, html, json, svg, png, jpg, gif, webp, ico, txt, md y fuentes.</li>
-<li>Límites al subir: 5 MB por archivo, 5 imágenes y 20 archivos.</li></ul>
-
-<h2 id="consejos">Buenas prácticas</h2>
-<ul><li>Usa rutas con prefijo propio: <code>/api/plugins/&lt;id&gt;/…</code>.</li>
-<li>Limpia temporizadores y conexiones en <code>deactivate</code>.</li>
-<li>Si reemplazas una ruta existente, ten claro qué rompes: tu plugin va antes que el código original.</li>
-<li>Usa las variables CSS del tema (<code>var(--card)</code>, <code>var(--accent)</code>, <code>var(--text)</code>…) para que tu interfaz respete los temas.</li>
-<li>Sube la versión en <code>plugin.json</code> cada vez que publiques cambios.</li>
-<li>Empieza por el plugin <b>Hola plugin</b> (categoría Desarrollo): es una plantilla mínima.</li></ul>
-</main></div></body></html>
+<section id="faq"><h2><span class="n">6</span>¿Algo no funciona?</h2>
+<details><summary>Al subir me dice que no tengo permiso o falla Git</summary>Revisa el Paso 0: el archivo debe llamarse exactamente <code>.env</code>, estar junto a <code>package.json</code>, contener <code>PLUGINS_GITHUB_TOKEN=…</code> sin espacios ni comillas, y SynapseBox debe haberse <b>reiniciado</b> después. También necesitas tener <code>git</code> instalado. Si sigue fallando, abre un ticket en el <a href="https://discord.gg/jRvMMkZNBP" target="_blank" rel="noopener">Discord</a>.</details>
+<details><summary>Mi plugin no aparece en “Instalados”</summary>La carpeta debe estar en <code>data/plugins/</code>, llamarse igual que el <code>id</code> y tener un <code>plugin.json</code> válido (revisa comas y comillas).</details>
+<details><summary>Lo activo y no pasa nada</summary>Recarga la página con Ctrl+F5. Mira la consola del servidor: si hay un error en tu <code>server.js</code>, saldrá ahí con el nombre del plugin.</details>
+<details><summary>Cambié el código y no se nota</summary>Apaga y vuelve a encender el plugin: se recarga sin reiniciar el servidor. En el navegador, usa Ctrl+F5.</details>
+<details><summary>Mi ruta nueva da “No encontrado”</summary>Comprueba que el plugin está activado y que la dirección empieza igual que en tu código. Si usas <code>api.use</code>, no olvides llamar a <code>next()</code>.</details>
+<details><summary>Dónde pido ayuda</summary>En un ticket del <a href="https://discord.gg/jRvMMkZNBP" target="_blank" rel="noopener">servidor oficial de Discord</a>.</details></section>
+</main>
+<footer>Guía de plugins · SynapseBox 2.15 · <a href="https://discord.gg/jRvMMkZNBP" target="_blank" rel="noopener">Soporte en Discord</a></footer>
+<script src="app.js"></script></body></html>
