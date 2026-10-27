@@ -13,7 +13,7 @@
 <button id="go" disabled>Entendido, ver cómo se hace</button></div></div>
 
 <div class="must">🔑 Importante: para subir plugins necesitas crear el <code>.env</code> con tu token. <a href="#paso0" data-gate>Ver cómo →</a></div>
-<header class="top"><b>🧩 Plugins de SynapseBox</b><a href="#que">¿Qué es?</a><a href="#paso0" class="keep">Paso 0 · .env</a><a href="#primero">Tu primer plugin</a><a href="#piezas">Las piezas</a><a href="#ref">Referencia</a><a href="#subir">Subir</a><a href="#faq">Problemas</a></header>
+<header class="top"><b>🧩 Plugins de SynapseBox</b><a href="#que">¿Qué es?</a><a href="#paso0" class="keep">Paso 0 · .env</a><a href="#primero">Tu primer plugin</a><a href="#piezas">Las piezas</a><a href="#ext">Extensiones</a><a href="#ref">Referencia</a><a href="#catalogo">Catálogo</a><a href="#subir">Subir</a><a href="#faq">Problemas</a></header>
 
 <div class="hero"><h1>Crea plugins para SynapseBox</h1><p>Cambia iconos, colores, imágenes y funciones sin tocar el código original. Esta guía está hecha para que la entienda cualquiera, aunque estés empezando.</p><a class="btn" href="#primero">Empezar en 5 minutos</a></div>
 
@@ -61,7 +61,7 @@
   SynapseBox.toast("¡Hola desde mi primer plugin! 👋");
 });</code></pre></li>
 <li><b>Actívalo</b><br>Ve a <b>Admin → Plugins → Instalados</b>, busca “Mi saludo” y enciende el interruptor.</li>
-<li><b>¡Míralo!</b><br>Recarga el panel: aparece el aviso. Apaga el interruptor y desaparece. Así de simple.</li></ol>
+<li><b>¡Míralo!</b><br>Recarga el panel (Ctrl+F5): aparece el aviso. Apaga el interruptor y desaparece. Así de simple.</li></ol>
 <div class="box ok"><b>🎉 Ya sabes lo básico</b>Un plugin es una carpeta con un <code>plugin.json</code> y uno o más archivos de código. Ahora veamos qué piezas puedes usar.</div></section>
 
 <section id="piezas"><h2><span class="n">2</span>Las 3 piezas de un plugin</h2><p class="sub">Todas son opcionales: usa solo las que necesites.</p>
@@ -111,11 +111,32 @@
   b.onclick = () =&gt; SynapseBox.toast("¡Hola!");
   document.body.append(b);
 });</code></pre></details>
+<details><summary>🧩 Tu sección en Administración → Extensiones</summary><p>Añade esto a tu <code>client.js</code>. No hace falta ningún botón: aparece sola como pestaña dentro de <b>Extensiones</b> (recarga la página tras activar el plugin).</p><pre><code>SynapseBox.admin({
+  id: "mi-plugin", title: "Mi plugin",
+  async render(el, h) {
+    const c = await h.api("/api/plugins/mi-plugin/config");
+    el.innerHTML = h.head("Mi plugin", "Ajustes de ejemplo") +
+      `&lt;div class="card" style="display:grid;gap:12px;max-width:520px"&gt;
+         ${h.fld("Mensaje", "", `&lt;input class="input" id="m" value="${h.esc(c.mensaje)}"&gt;`)}
+         ${h.chk("on", "Activado", "", c.on)}
+         &lt;div class="row"&gt;&lt;button class="btn" id="s"&gt;Guardar&lt;/button&gt;&lt;/div&gt;
+       &lt;/div&gt;`;
+    el.querySelector("#s").onclick = async () =&gt; {
+      try { await h.api("/api/plugins/mi-plugin/config", { mensaje: el.querySelector("#m").value, on: el.querySelector("#on").checked }); h.toast("Guardado"); }
+      catch (e) { h.toast(e.message, 1); }
+    };
+  }
+});</code></pre><p>Y en tu <code>server.js</code> las rutas <code>/config</code> protegidas con <code>api.adminOnly</code>.</p></details>
 <details><summary>⏱️ Tarea que se repite (acordarse de limpiar)</summary><pre><code>let t;
 module.exports = {
   activate(api) { t = setInterval(() =&gt; api.log("tic"), 60000); },
   deactivate()  { clearInterval(t); }   // se ejecuta al apagar el plugin
 };</code></pre></details></section>
+
+<section id="ext"><h2><span class="n">2½</span>Configuración en el panel: «Extensiones»</h2>
+<p class="sub">Desde la 2.16.3 los plugins <b>ya no ponen botones flotantes</b>. Cada plugin con ajustes tiene su sección dentro de <b>Administración → Extensiones</b>.</p>
+<div class="grid"><div class="card"><div class="ic">1️⃣</div><h4>Activa el plugin</h4><p>En <b>Plugins → Instalados</b>.</p></div><div class="card"><div class="ic">2️⃣</div><h4>Recarga la página</h4><p>Ctrl+F5 para que cargue su parte del navegador.</p></div><div class="card"><div class="ic">3️⃣</div><h4>Abre «Extensiones»</h4><p>Aparece una pestaña por plugin activo con ajustes.</p></div></div>
+<div class="box"><b>¿No ves la pestaña?</b>Solo aparece si hay plugins activos que la usen. Revisa que estén activados, recarga con Ctrl+F5 y comprueba que tienes <b>SynapseBox 2.16.4</b> o superior.</div></section>
 
 <section id="ref"><h2><span class="n">3</span>Referencia rápida</h2><p class="sub">Para cuando ya quieras hacer cosas más grandes. No hace falta memorizarla.</p>
 <h3>En server.js recibes <code>api</code></h3>
@@ -130,16 +151,16 @@ module.exports = {
 <tr><td><code>api.db</code></td><td>Base de datos de SynapseBox (<code>get</code>, <code>all</code>, <code>run</code>).</td></tr>
 <tr><td><code>api.core("ruta")</code></td><td>Usar cualquier módulo interno de SynapseBox.</td></tr>
 <tr><td><code>api.on / emit</code></td><td>Eventos: <code>server:start</code> y <code>plugin:enabled</code> (y los tuyos).</td></tr>
-<tr><td><code>api.log(...)</code></td><td>Escribir en la consola con el nombre de tu plugin.</td></tr></table>
+<tr><td><code>api.adminOnly</code></td><td>Middleware que deja pasar solo a administradores: <code>api.get(ruta, api.adminOnly, fn)</code>.</td></tr><tr><td><code>api.dataDir</code></td><td>Carpeta propia del plugin para guardar archivos (copias, caché…).</td></tr><tr><td><code>api.config</code></td><td>Rutas y ajustes de SynapseBox (por ejemplo <code>api.config.TMP</code>).</td></tr><tr><td><code>api.log(...)</code></td><td>Escribir en la consola con el nombre de tu plugin.</td></tr></table>
 <p>Dentro de una ruta: <code>req.user</code> es la persona con sesión (o vacío) y <code>req.user.is_admin</code> dice si es administrador.</p>
 <h3>En client.js tienes <code>SynapseBox</code></h3>
 <table><tr><th>Herramienta</th><th>Sirve para</th></tr>
 <tr><td><code>SynapseBox.ready(fn)</code></td><td>Ejecutar cuando la página está lista.</td></tr>
-<tr><td><code>SynapseBox.page</code></td><td>En qué página estás (<code>panel</code>, <code>admin/index</code>…).</td></tr>
+<tr><td><code>SynapseBox.page</code></td><td>En qué página estás (<code>panel</code>, <code>admin/index</code>…). En administración puede ser <code>admin</code>, <code>admin/</code> o <code>admin/index</code>: usa <code>page.startsWith("admin")</code>.</td></tr>
 <tr><td><code>SynapseBox.toast(texto)</code></td><td>Aviso emergente.</td></tr>
 <tr><td><code>SynapseBox.api(url, datos?)</code></td><td>Hablar con el servidor (devuelve JSON).</td></tr>
 <tr><td><code>SynapseBox.css(texto)</code></td><td>Añadir estilos desde código.</td></tr>
-<tr><td><code>SynapseBox.session()</code></td><td>Saber quién ha iniciado sesión.</td></tr></table>
+<tr><td><code>SynapseBox.session()</code></td><td>Saber quién ha iniciado sesión (<code>logged</code>, <code>admin</code>…).</td></tr><tr><td><code>SynapseBox.admin({id, title, render})</code></td><td>Crear tu <b>sección de configuración</b> en Administración → Extensiones. <a href="#ext">Ver cómo</a>.</td></tr></table>
 <h3>Ciclo de vida</h3>
 <div class="flow"><span>🟢 Activar<br><small>se ejecuta <code>activate</code></small></span><i>→</i><span>⚙️ Funciona<br><small>rutas + client + style</small></span><i>→</i><span>🔴 Desactivar<br><small>se ejecuta <code>deactivate</code></small></span></div></section>
 
@@ -161,9 +182,34 @@ module.exports = {
 <div class="card"><div class="ic">🧼</div><h4>No te fíes de lo que llega</h4><p>Valida todo lo que venga en <code>req.body</code> y <code>req.query</code>.</p></div>
 <div class="card"><div class="ic">🏷️</div><h4>Rutas con tu nombre</h4><p>Empieza por <code>/api/plugins/tu-id/…</code> para no pisar nada sin querer.</p></div>
 <div class="card"><div class="ic">🧹</div><h4>Limpia al apagar</h4><p>Detén temporizadores en <code>deactivate</code>.</p></div>
+<div class="card"><div class="ic">🚫</div><h4>Nada de botones flotantes</h4><p>Los ajustes van en <a href="#ext">Extensiones</a>, no en botones que tapan la pantalla. Solo flota lo que el usuario necesita ver (como un reloj) y que no estorbe: <code>pointer-events:none</code>.</p></div>
 <div class="card"><div class="ic">🎨</div><h4>Usa las variables del tema</h4><p><code>var(--card)</code>, <code>var(--accent)</code>, <code>var(--text)</code>… así respetas los temas.</p></div>
 <div class="card"><div class="ic">🤫</div><h4>Cero secretos en el plugin</h4><p>Nada de contraseñas ni tokens dentro de tus archivos: el repositorio es público.</p></div></div></section>
 
+<section id="catalogo"><h2><span class="n">7</span>Catálogo de plugins oficiales</h2><p class="sub">Los que ya puedes descargar desde <b>Admin → Plugins → Repositorio</b>. Los marcados con ⚙️ tienen su sección de ajustes en <b>Extensiones</b>.</p>
+<div class="grid">
+<div class="card"><h4>AMOLED negro</h4><p><span class="pill">Apariencia</span> <span class="pill">v1.0.0</span></p><p>Fondo negro puro para pantallas OLED, por encima del tema que tengas elegido.</p></div>
+<div class="card"><h4>Favicon arcoíris</h4><p><span class="pill">Apariencia</span> <span class="pill">v1.0.0</span></p><p>Reemplaza el icono de la pestaña por uno de colores usando serveFile.</p></div>
+<div class="card"><h4>Modo compacto</h4><p><span class="pill">Apariencia</span> <span class="pill">v1.0.0</span></p><p>Reduce espacios y tamaños para ver más archivos en pantalla.</p></div>
+<div class="card"><h4>Hola plugin</h4><p><span class="pill">Desarrollo</span> <span class="pill">v1.1.0</span> <span class=pill>⚙️ Extensiones</span></p><p>Plantilla mínima: una ruta en el servidor, un aviso en el cliente y una sección en Administración → Extensiones. Empieza por aquí.</p></div>
+<div class="card"><h4>Avisos por webhook</h4><p><span class="pill">Integraciones</span> <span class="pill">v1.0.0</span> <span class=pill>⚙️ Extensiones</span></p><p>Recibe en Discord (o JSON genérico) avisos de inicios de sesión fallidos, acciones de administración y arranques del servidor.</p></div>
+<div class="card"><h4>CORS configurable</h4><p><span class="pill">Integraciones</span> <span class="pill">v1.0.0</span> <span class=pill>⚙️ Extensiones</span></p><p>Permite que páginas de otros dominios usen la API de SynapseBox desde el navegador, con lista de orígenes y cookies opcionales.</p></div>
+<div class="card"><h4>Variables BDFD</h4><p><span class="pill">Integraciones</span> <span class="pill">v1.0.0</span></p><p>Guarda, lee, suma, elimina y recupera variables de tu bot de BDFD (usuario, servidor, canal, miembro, bot o global) en tu almacenamiento, con ID y clave del perfil. Responde en JSON y se bloquea al llenarse la cuota.</p></div>
+<div class="card"><h4>Bloqueo por IP</h4><p><span class="pill">Seguridad</span> <span class="pill">v1.1.0</span> <span class=pill>⚙️ Extensiones</span></p><p>Bloquea direcciones IP (exactas o con comodín) con lista de permitidas y contador de intentos bloqueados. Se gestiona en Administración → Extensiones. Nunca bloquea el acceso local ni tu propia IP.</p></div>
+<div class="card"><h4>Cierre por inactividad</h4><p><span class="pill">Seguridad</span> <span class="pill">v1.0.0</span> <span class=pill>⚙️ Extensiones</span></p><p>Cierra la sesión de quien se deja el navegador abierto, con cuenta atrás y botón para seguir conectado. Ajustes en Administración → Extensiones.</p></div>
+<div class="card"><h4>Límite de peticiones</h4><p><span class="pill">Seguridad</span> <span class="pill">v1.0.0</span> <span class=pill>⚙️ Extensiones</span></p><p>Frena el abuso y la fuerza bruta: limita las peticiones por IP y los intentos de inicio de sesión. Contadores y ajustes en Administración → Extensiones.</p></div>
+<div class="card"><h4>Registro de accesos</h4><p><span class="pill">Seguridad</span> <span class="pill">v1.1.0</span> <span class=pill>⚙️ Extensiones</span></p><p>Registra quién modifica qué y desde qué IP. Tabla con búsqueda y filtros, exportación a CSV y ajustes, en Administración → Extensiones.</p></div>
+<div class="card"><h4>Atajos de teclado</h4><p><span class="pill">Utilidades</span> <span class="pill">v1.1.0</span> <span class=pill>⚙️ Extensiones</span></p><p>Atajos de teclado configurables (por defecto Alt+H panel, Alt+A administración, Alt+T temas). Edítalos en Administración → Extensiones.</p></div>
+<div class="card"><h4>Copias de seguridad</h4><p><span class="pill">Utilidades</span> <span class="pill">v1.0.0</span> <span class=pill>⚙️ Extensiones</span></p><p>Copias automáticas y manuales de la base de datos con rotación, descarga y borrado desde Administración → Extensiones.</p></div>
+<div class="card"><h4>Estadísticas de uso</h4><p><span class="pill">Utilidades</span> <span class="pill">v1.0.0</span> <span class=pill>⚙️ Extensiones</span></p><p>Páginas vistas, llamadas a la API, errores e IP distintas por día, con gráfica y rutas más usadas, en Administración → Extensiones.</p></div>
+<div class="card"><h4>Health check</h4><p><span class="pill">Utilidades</span> <span class="pill">v1.1.0</span> <span class=pill>⚙️ Extensiones</span></p><p>Añade /healthz para monitorizar SynapseBox y un panel de salud en vivo en Administración → Extensiones (base de datos, memoria, tiempo activo, versión).</p></div>
+<div class="card"><h4>Limpieza de temporales</h4><p><span class="pill">Utilidades</span> <span class="pill">v1.0.0</span> <span class=pill>⚙️ Extensiones</span></p><p>Borra automáticamente lo antiguo de la carpeta temporal (subidas a medias, restos) y muestra cuánto ocupa.</p></div>
+<div class="card"><h4>Mensaje de bienvenida</h4><p><span class="pill">Utilidades</span> <span class="pill">v1.0.0</span> <span class=pill>⚙️ Extensiones</span></p><p>Ventana de bienvenida que cada persona ve una sola vez al entrar al panel; el administrador puede renovarla.</p></div>
+<div class="card"><h4>Modo mantenimiento</h4><p><span class="pill">Utilidades</span> <span class="pill">v1.1.0</span> <span class=pill>⚙️ Extensiones</span></p><p>Pone el sitio en mantenimiento para los usuarios (503 con mensaje propio) con fin automático programable, mientras los administradores siguen trabajando. Se gestiona en Administración → Extensiones.</p></div>
+<div class="card"><h4>Notas del administrador</h4><p><span class="pill">Utilidades</span> <span class="pill">v1.0.0</span> <span class=pill>⚙️ Extensiones</span></p><p>Bloc de notas compartido entre administradores con guardado automático, en Administración → Extensiones.</p></div>
+<div class="card"><h4>Redirecciones</h4><p><span class="pill">Utilidades</span> <span class="pill">v1.0.0</span> <span class=pill>⚙️ Extensiones</span></p><p>Haz que una dirección de tu SynapseBox lleve a otra (enlaces cortos, páginas movidas). Se gestiona en Administración → Extensiones.</p></div>
+<div class="card"><h4>Reloj en el panel</h4><p><span class="pill">Utilidades</span> <span class="pill">v2.0.0</span> <span class=pill>⚙️ Extensiones</span></p><p>Reloj flotante con 8 diseños (píldora, minimalista, neón, LCD, vidrio, terminal, analógico y flip). Se configura en Administración → Extensiones y no tapa botones.</p></div>
+</div></section>
 <section id="faq"><h2><span class="n">6</span>¿Algo no funciona?</h2>
 <details><summary>Al subir me dice que no tengo permiso o falla Git</summary>Revisa el Paso 0: el archivo debe llamarse exactamente <code>.env</code>, estar junto a <code>package.json</code>, contener <code>PLUGINS_GITHUB_TOKEN=…</code> sin espacios ni comillas, y SynapseBox debe haberse <b>reiniciado</b> después. También necesitas tener <code>git</code> instalado. Si sigue fallando, abre un ticket en el <a href="https://discord.gg/jRvMMkZNBP" target="_blank" rel="noopener">Discord</a>.</details>
 <details><summary>Mi plugin no aparece en “Instalados”</summary>La carpeta debe estar en <code>data/plugins/</code>, llamarse igual que el <code>id</code> y tener un <code>plugin.json</code> válido (revisa comas y comillas).</details>
@@ -172,5 +218,5 @@ module.exports = {
 <details><summary>Mi ruta nueva da “No encontrado”</summary>Comprueba que el plugin está activado y que la dirección empieza igual que en tu código. Si usas <code>api.use</code>, no olvides llamar a <code>next()</code>.</details>
 <details><summary>Dónde pido ayuda</summary>En un ticket del <a href="https://discord.gg/jRvMMkZNBP" target="_blank" rel="noopener">servidor oficial de Discord</a>.</details></section>
 </main>
-<footer>Guía de plugins · SynapseBox 2.15 · <a href="https://discord.gg/jRvMMkZNBP" target="_blank" rel="noopener">Soporte en Discord</a></footer>
+<footer>Guía de plugins · SynapseBox 2.16.4 · <a href="https://discord.gg/jRvMMkZNBP" target="_blank" rel="noopener">Soporte en Discord</a></footer>
 <script src="app.js"></script></body></html>
